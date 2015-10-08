@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import sys, os
 from ConfigParser import SafeConfigParser
 import logging

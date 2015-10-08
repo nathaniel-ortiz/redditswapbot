@@ -1,11 +1,13 @@
+#!/usr/bin/env python2
+
 import sys, os
 from ConfigParser import SafeConfigParser
-import logging
 import praw
 from praw.handlers import MultiprocessHandler
 import datetime
 from datetime import datetime, timedelta
 from time import sleep, time
+from log_conf import LoggerManager
 
 # load config file
 containing_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -24,10 +26,7 @@ added_msg = cfg_file.get('trade', 'added')
 age_check = cfg_file.get('trade', 'age_check')
 karma_check = cfg_file.get('trade', 'karma_check')
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, filename='actions.log', format='%(asctime)s - %(message)s')
-requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.WARNING)
+logger=LoggerManager().getLogger(__name__)
 
 def main():
 
@@ -85,7 +84,7 @@ def main():
 	def flair(item):
 		if item.author_flair_css_class != 'i-mod':
 			item.subreddit.set_flair(item.author, item.author_flair_text, item.author_flair_css_class)
-			logging.info('FLAIR: Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)
+			logger.info('FLAIR: Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)
 
 		for com in flat_comments:
 			if hasattr(com.author, 'name'):
@@ -102,7 +101,7 @@ def main():
 			completed = myfile.read()
 
 		# Log in
-		logging.info('FLAIR: Logging in as /u/'+username)
+		logger.info('FLAIR: Logging in as /u/'+username)
 		if multiprocess == 'true':
 			handler = MultiprocessHandler()
 			r = praw.Reddit(user_agent=username, handler=handler)
@@ -116,6 +115,7 @@ def main():
 		flat_comments = list(praw.helpers.flatten_tree(submission.comments))
 
 		for comment in flat_comments:
+			logger.debug("Processing comment: " + comment.id)
 			if not hasattr(comment, 'author'):
 				continue
 			if not conditions():
@@ -143,7 +143,7 @@ def main():
 			save()
 
 	except Exception as e:
-		logging.error(e)
+		logger.error(e)
 
 if __name__ == '__main__':
 	main()

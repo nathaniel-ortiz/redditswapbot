@@ -1,8 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 import sys, os
 from ConfigParser import SafeConfigParser
-import logging
 import praw
 import re
 import mySQLHandler

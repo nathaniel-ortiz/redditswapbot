@@ -3,10 +3,10 @@
 import sys, os
 import re
 from ConfigParser import SafeConfigParser
-import logging
 import praw
 from praw.handlers import MultiprocessHandler
 import time
+from log_conf import LoggerManager
 
 containing_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
 cfg_file = SafeConfigParser()
@@ -16,6 +16,8 @@ cfg_file.read(path_to_cfg)
 username = cfg_file.get('reddit', 'username')
 password = cfg_file.get('reddit', 'password')
 subreddit = cfg_file.get('reddit', 'subreddit')
+
+logger=LoggerManager().getLogger(__name__)
 
 def get_month():
 	month = time.strftime('%B')
@@ -58,6 +60,7 @@ def main():
 	post_id = post_thread(r, month)
 	change_sidebar(r, post_id, month)
 	update_config(post_id)
-	
+	logger.info("Posted Trade Confirmation Post")
+
 if __name__ == '__main__':
 	main()
