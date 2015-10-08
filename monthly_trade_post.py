@@ -1,240 +1,63 @@
-# -*- coding: utf-8 -*-
-'''
-Created on 02/01/2014
-'''
+#!/usr/bin/env python2
 
-import MySQLdb
-import _mysql_exceptions
+import sys, os
+import re
+from ConfigParser import SafeConfigParser
 import logging
+import praw
+from praw.handlers import MultiprocessHandler
 import time
- 
-class mySQLHandler(logging.Handler):
-    """
-    Logging handler for MySQL.
-     
-    Based on Vinay Sajip's DBHandler class (http://www.red-dove.com/python_logging.html)
-    forked from ykessler/gae_handler.py (https://gist.github.com/ykessler/2662203)
-    <from ykessler/gae_handler.py>
-    This version sacrifices performance for thread-safety:
-    Instead of using a persistent cursor, we open/close connections for each entry.
-    AFAIK this is necessary in multi-threaded applications,
-    because SQLite doesn't allow access to objects across threads.
-    </from>
-    <from onemoretime>
-    please see:
-        https://github.com/onemoretime/mySQLHandler for more up-to-date version
-        README.md
-        LICENSE
-    </from>
-    @todo: create SQL table if necessary, try/except when execute sql, ...
-    @author: "onemoretime"
-    @copyright: "Copyright 2014, onemoretime"
-    @license: "WTFPL."
-    @version: "0.1"
-    @contact: "onemoretime"
-    @email: "onemoretime@cyber.world.universe"
-    @status: "Alpha"
-    """
- 
-    initial_sql = """CREATE TABLE IF NOT EXISTS log(
-    Created text,
-    Name text,
-    LogLevel int,
-    LogLevelName text,
-    Message text,
-    Args text,
-    Module text,
-    FuncName text,
-    LineNo int,
-    Exception text,
-    Process int,
-    Thread text,
-    ThreadName text
-    )"""
- 
-    insertion_sql = """INSERT INTO log(
-    Created,
-    Name,
-    LogLevel,
-    LogLevelName,
-    Message,
-    Args,
-    Module,
-    FuncName,
-    LineNo,
-    Exception,
-    Process,
-    Thread,
-    ThreadName
-    )
-    VALUES (
-    '%(dbtime)s',
-    '%(name)s',
-    %(levelno)d,
-    '%(levelname)s',
-    '%(msg)s',
-    '%(args)s',
-    '%(module)s',
-    '%(funcName)s',
-    %(lineno)d,
-    '%(exc_text)s',
-    %(process)d,
-    '%(thread)s',
-    '%(threadName)s'
-    );
-    """
- 
-    def __init__(self, db):
-        """
-        Constructor
-        @param db: ['host','port','dbuser', 'dbpassword', 'dbname'] 
-        @return: mySQLHandler
-        """
-        
-        logging.Handler.__init__(self)
-        self.db = db
-        # Try to connect to DB
 
-        # Check if 'log' table in db already exists
-        result = self.checkTablePresence()
-        # If not exists, then create the table
-        if not result:
-            try:
-                conn=MySQLdb.connect(host=self.db['host'],port=self.db['port'],user=self.db['dbuser'],passwd=self.db['dbpassword'],db=self.db['dbname'])
-            except _mysql_exceptions, e:
-                raise Exception(e)
-                exit(-1)
-            else:         
-                cur = conn.cursor()
-                try:
-                    cur.execute(mySQLHandler.initial_sql)
-                except _mysql_exceptions as e:
-                    conn.rollback()
-                    cur.close()
-                    conn.close()
-                    raise Exception(e)
-                    exit(-1)
-                else:
-                    conn.commit()
-                finally:
-                    cur.close()
-                    conn.close()
-        
-    def checkTablePresence(self):
-        try:
-            conn=MySQLdb.connect(host=self.db['host'],port=self.db['port'],user=self.db['dbuser'],passwd=self.db['dbpassword'],db=self.db['dbname'])
-        except _mysql_exceptions, e:
-            raise Exception(e)
-            exit(-1)
-        else:
-            # Check if 'log' table in db already exists
-            cur = conn.cursor()
-            stmt = "SHOW TABLES LIKE 'log';"
-            cur.execute(stmt)
-            result = cur.fetchone()
-            cur.close()
-            conn.close()
-        
-        if not result:
-            return 0
-        else:
-            return 1
-    def createTableLog(self):
-        pass
-        
-    def formatDBTime(self, record):
-        """
-        Time formatter
-        @param record:
-        @return: nothing
-        """ 
-        record.dbtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(record.created))
- 
-    def emit(self, record):
-        """
-        Connect to DB, execute SQL Request, disconnect from DB
-        @param record:
-        @return: 
-        """ 
-        # Use default formatting:
-        self.format(record)
-        # Set the database time up:
-        self.formatDBTime(record)
-        if record.exc_info:
-            record.exc_text = logging._defaultFormatter.formatException(record.exc_info)
-        else:
-            record.exc_text = ""
-        # Insert log record:
-        sql = mySQLHandler.insertion_sql % record.__dict__
-        try:
-            conn=MySQLdb.connect(host=self.db['host'],port=self.db['port'],user=self.db['dbuser'],passwd=self.db['dbpassword'],db=self.db['dbname'])
-        except _mysql_exceptions, e:
-            from pprint import pprint
-            print("The Exception during db.connect")           
-            pprint(e)
-            raise Exception(e)
-            exit(-1)
-        cur = conn.cursor()
-        try:
-            cur.execute(sql)
-        except _mysql_exceptions.ProgrammingError as e:
-            errno, errstr = e.args
-            if not errno == 1146:
-                raise
-            cur.close() # close current cursor
-            cur = conn.cursor() # recreate it (is it mandatory?)
-            try:            # try to recreate table
-                cur.execute(mySQLHandler.initial_sql)
-        
-            except _mysql_exceptions as e:
-                # definitly can't work...
-                conn.rollback()
-                cur.close()
-                conn.close()
-                raise Exception(e)
-                exit(-1)
-            else:   # if recreate log table is ok
-                conn.commit()                  
-                cur.close()
-                cur = conn.cursor()
-                cur.execute(sql)
-                conn.commit()
-                # then Exception vanished
-                    
-        except _mysql_exceptions, e:
-            conn.rollback()
-            cur.close()
-            conn.close()
-            raise Exception(e)
-            exit(-1)
-        else:
-            conn.commit()
-        finally:
-            cur.close()
-            conn.close()
-        
+containing_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+cfg_file = SafeConfigParser()
+path_to_cfg = os.path.join(containing_dir, 'config.cfg')
+cfg_file.read(path_to_cfg)
+
+username = cfg_file.get('reddit', 'username')
+password = cfg_file.get('reddit', 'password')
+subreddit = cfg_file.get('reddit', 'subreddit')
+
+def get_month():
+	month = time.strftime('%B')
+	return(month)
+
+def login():
+	r = praw.Reddit(user_agent=username)
+	r.login(username, password)
+	return(r)
+
+def post_thread(r,month):
+	post = r.submit(subreddit,'%s Confirmed Trade Thread' % month, text='''Post your confirmed trades below, When confirming a post put Confirmed only nothing else it makes the bot unhappy :(
+
+If more proof is requested by the bot please send a [modmail](http://www.reddit.com/message/compose?to=%2Fr%2Fmechmarket) including the following:
+
+* Screenshot of PM\'s between the users
+* Screenshot of Tracking (may also include link)
+* Screenshot of PayPal transaction
+* Permalink to trade confirmed thread comment''', send_replies=False)
+	post.distinguish(as_made_by='mod')
+	post.sticky(bottom=False)
+	#r.send_message('/r/'+subreddit, 'New Trade Thread', 'A new trade thread has been posted for the month and the sidebar has been updated.')
+	return (post.id)
+
+def change_sidebar(r, post_id, month):
+	sr = r.get_subreddit(subreddit)
+	sb = sr.get_settings()["description"]
+	new_flair = r'[Confirm your Trades](/'+post_id+')'
+	new_sb = re.sub(r'\[Confirm your Trades\]\(\/[a-z0-9]+\)',new_flair, sb, 1)
+	sr.update_settings(description = new_sb)
+
+def update_config(post_id):
+	cfg_file.set('trade', 'link_id', post_id)
+	with open(r'config.cfg', 'wb') as configfile:
+		cfg_file.write(configfile)
+
 def main():
-    def print_all_log(oLog):
-        # Print all log levels
-        oLog.debug('debug')
-        oLog.info('info')
-        oLog.warning('warning')
-        oLog.error('error')
-        oLog.critical('critical')
-    
-                
-    logger = logging.getLogger('simple_example')
-    logger.setLevel(logging.DEBUG)
-        
-    db = {'host':'localhost', 'port': 3306, 'dbuser':'logger', 'dbpassword':'loggerpasswd', 'dbname':'logger'}
-    
-    sqlh = mySQLHandler(db)
-    logger.addHandler(sqlh)
-    # In main Thread
-    print_all_log(logger)
-    
-
-
-
+	month = get_month()
+	r = login()
+	post_id = post_thread(r, month)
+	change_sidebar(r, post_id, month)
+	update_config(post_id)
+	
 if __name__ == '__main__':
-    main()
+	main()
