@@ -9,6 +9,7 @@ import mySQLHandler
 from datetime import datetime, timedelta
 from time import sleep, time
 from pprint import pprint
+from log_conf import LoggerManager
 
 # load config file
 containing_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -20,29 +21,7 @@ password = cfg_file.get('reddit', 'password')
 subreddit = cfg_file.get('reddit', 'subreddit')
 multiprocess = cfg_file.get('reddit', 'multiprocess')
 
-logging_dest = cfg_file.get('logging','dest')
-
-mysql_hostname = cfg_file.get('mysql', 'hostname')
-mysql_username = cfg_file.get('mysql', 'username')
-mysql_password = cfg_file.get('mysql', 'password')
-mysql_database = cfg_file.get('mysql', 'database')
-
-#configure logging
-logger = logging.getLogger('post_check')
-logger.setLevel(logging.INFO)
-
-if logging_dest == 'mysql':
-	db = {'host':mysql_hostname, 'port':3306, 'dbuser':mysql_username, 'dbpassword':mysql_password, 'dbname':mysql_database}
-
-	sqlh = mySQLHandler.mySQLHandler(db)
-	logger.addHandler(sqlh)
-else:
-	fileh = logging.FileHandler('actions.log')
-	fileh.setFormatter(logging.Formatter('%(asctime)s - %(module)s - %(message)s'))
-	logger.addHandler(fileh)
-
-requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.WARNING)
+logger=LoggerManager().getLogger(__name__)
 
 def main():
 	while True:
@@ -123,7 +102,7 @@ def main():
 										heatware = "[" + str(post.author_flair_text) + "](" + str(post.author_flair_text) +")"
 									post.add_comment('* Username: ' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Confirmed trades: ' + str(post.author_flair_css_class).translate(None, 'i-') + '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/mechmarket/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/mechmarket/wiki/index)')
 	
-				logging.debug('Sleeping for 2 minutes')
+				logger.debug('Sleeping for 2 minutes')
 				sleep(120)
 		except Exception as e:
 			logger.error(e)
