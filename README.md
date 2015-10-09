@@ -15,6 +15,5 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
 ## TODO
 
 * Upgrade to OAuth2, since password-based login will be deprecated soon
-* Switch to MySQL/SQLite for logging instead of a flatfile
 * Implement multiproccess 
 * Make the bot stricter so that it matches the username in the comment with the commenter's username
