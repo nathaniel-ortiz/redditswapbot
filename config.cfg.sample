@@ -5,6 +5,15 @@ password = YOUR_PASSWORD
 subreddit = YOUR_SUBREDDIT
 multiprocess = false
 
+[logging]
+dest = mysql
+
+[mysql]
+hostname = MYSQL_HOST_NAME
+username = MYSQL_USER_NAME
+password = MYSQL_PASSWORD
+database = MYSQL_DATABASE
+
 [trade]
 link_id = TRADE_POST_LINK_ID
 equal = You have confirmed a trade under your own post, this action has been reported to the Moderators.

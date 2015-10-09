@@ -2,11 +2,11 @@
 
 import sys, os
 from ConfigParser import SafeConfigParser
-import logging
 import praw
 import re
 from datetime import datetime, timedelta
 from time import sleep, time
+from log_conf import LoggerManager
 
 # load config file
 containing_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -22,14 +22,11 @@ regex = cfg_file.get('heatware', 'regex')
 multiprocess = cfg_file.get('reddit', 'multiprocess')
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, filename='actions.log', format='%(asctime)s - %(message)s')
-requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.WARNING)
-
+logger=LoggerManager().getLogger(__name__)
 
 def main():
 	try:
-		logging.info('HEATWARE: Logging in as /u/'+username)
+		logger.info('HEATWARE: Logging in as /u/'+username)
 		if multiprocess == 'true':
 			handler = MultiprocessHandler()
 			r = praw.Reddit(user_agent=username, handler=handler)
@@ -43,6 +40,7 @@ def main():
 		flat_comments = list(praw.helpers.flatten_tree(submission.comments))
 
 		for comment in flat_comments:
+			logger.debug("Processing comment: " + comment.id)
 			if not hasattr(comment, 'author'):
 				continue
 			if comment.is_root == True:
@@ -61,12 +59,12 @@ def main():
 									comment.subreddit.set_flair(comment.author, url, comment.author_flair_css_class)
 								else:
 									comment.subreddit.set_flair(comment.author, url, 'i-none')
-								logging.info('HEATWARE: Set ' + comment.author.name + '\'s heatware to ' + url)
+								logger.info('HEATWARE: Set ' + comment.author.name + '\'s heatware to ' + url)
 								if respond == 'yes':
 									comment.reply('added')
 
 	except Exception as e:
-		logging.error(e)
+		logger.error(e)
 
 if __name__ == '__main__':
 	main()
