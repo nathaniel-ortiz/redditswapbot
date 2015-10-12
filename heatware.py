@@ -26,7 +26,7 @@ logger=LoggerManager().getLogger(__name__)
 
 def main():
 	try:
-		logger.info('HEATWARE: Logging in as /u/'+username)
+		logger.info('Logging in as /u/'+username)
 		if multiprocess == 'true':
 			handler = MultiprocessHandler()
 			r = praw.Reddit(user_agent=username, handler=handler)
@@ -59,7 +59,7 @@ def main():
 									comment.subreddit.set_flair(comment.author, url, comment.author_flair_css_class)
 								else:
 									comment.subreddit.set_flair(comment.author, url, 'i-none')
-								logger.info('HEATWARE: Set ' + comment.author.name + '\'s heatware to ' + url)
+								logger.info('Set ' + comment.author.name + '\'s heatware to ' + url)
 								if respond == 'yes':
 									comment.reply('added')
 

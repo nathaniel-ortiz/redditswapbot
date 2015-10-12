@@ -85,7 +85,7 @@ def main():
 	def flair(item):
 		if item.author_flair_css_class != 'i-mod':
 			item.subreddit.set_flair(item.author, item.author_flair_text, item.author_flair_css_class)
-			logger.info('FLAIR: Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)
+			logger.info('Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)
 
 		for com in flat_comments:
 			if hasattr(com.author, 'name'):
@@ -102,7 +102,7 @@ def main():
 			completed = myfile.read()
 
 		# Log in
-		logger.info('FLAIR: Logging in as /u/'+username)
+		logger.info('Logging in as /u/'+username)
 		if multiprocess == 'true':
 			handler = MultiprocessHandler()
 			r = praw.Reddit(user_agent=username, handler=handler)
