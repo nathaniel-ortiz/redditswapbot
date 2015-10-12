@@ -48,7 +48,7 @@ def main():
 								logger.warn('Removed post: '+post.title+' by '+post.author.name)
 								if not post.approved_by:
 									post.report()
-									post.add_comment('REMOVED: Please read the [wiki](/r/mechmarket/wiki/rules/rules) for posting rules').distinguish()
+									post.add_comment('REMOVED: Please read the [wiki](/r/' + subreddit + '/wiki/rules/rules) for posting rules').distinguish()
 									post.remove()
 								else:
 									logger.warn('Bad post approved by: '+post.approved_by.name)
@@ -100,7 +100,7 @@ def main():
 										heatware = "None"
 									else:
 										heatware = "[" + str(post.author_flair_text) + "](" + str(post.author_flair_text) +")"
-									post.add_comment('* Username: ' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Confirmed trades: ' + str(post.author_flair_css_class).translate(None, 'i-') + '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/mechmarket/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/mechmarket/wiki/index)')
+									post.add_comment('* Username: ' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Confirmed trades: ' + str(post.author_flair_css_class).translate(None, 'i-') + '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)')
 	
 				logger.debug('Sleeping for 2 minutes')
 				sleep(120)

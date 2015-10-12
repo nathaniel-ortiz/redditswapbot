@@ -31,12 +31,12 @@ def login():
 def post_thread(r,month):
 	post = r.submit(subreddit,'%s Confirmed Trade Thread' % month, text='''Post your confirmed trades below, When confirming a post put Confirmed only nothing else it makes the bot unhappy :(
 
-If more proof is requested by the bot please send a [modmail](http://www.reddit.com/message/compose?to=%2Fr%2Fmechmarket) including the following:
+If more proof is requested by the bot please send a [modmail](http://www.reddit.com/message/compose?to=%%2Fr%%2F%s) including the following:
 
 * Screenshot of PM\'s between the users
 * Screenshot of Tracking (may also include link)
 * Screenshot of PayPal transaction
-* Permalink to trade confirmed thread comment''', send_replies=False)
+* Permalink to trade confirmed thread comment''' % subreddit, send_replies=False)
 	post.distinguish(as_made_by='mod')
 	post.sticky(bottom=False)
 	#r.send_message('/r/'+subreddit, 'New Trade Thread', 'A new trade thread has been posted for the month and the sidebar has been updated.')
@@ -60,7 +60,7 @@ def main():
 	post_id = post_thread(r, month)
 	change_sidebar(r, post_id, month)
 	update_config(post_id)
-	logger.info("Posted Trade Confirmation Post")
+	logger.info("Posted Trade Confirmation thread")
 
 if __name__ == '__main__':
 	main()

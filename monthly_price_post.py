@@ -29,14 +29,14 @@ def login():
 	return(r)
 
 def post_thread(r,month):
-	post = r.submit(subreddit,'OFFICIAL [PRICE CHECK] THREAD - MONTH OF %s' % month, text='''This is the official [Price Check] thread for /r/mechmarket! The rules are simple:
+	post = r.submit(subreddit,'OFFICIAL [PRICE CHECK] THREAD - MONTH OF %s' % month.upper(), text='''This is the official [Price Check] thread for /r/%s! The rules are simple:
 
 * List what specific items you have and your questions about their value
 * If you think you know what an item is worth, comment and tell the OP!
 * ***OFFERING IS NOT ALLOWED***. Making offers will result in your comment being removed and a warning being issued.
 * Once you're happy with the price you hear, feel free to make a trade post! Just make sure you follow all the rules and include a timestamped picture.
 
-**It helps to sort by new!**''', send_replies=False)
+**It helps to sort by new!**''' % subreddit, send_replies=False)
 	post.distinguish(as_made_by='mod')
 	post.sticky(bottom=True)
 	r.set_flair(subreddit, post, 'Meta', 'meta')
