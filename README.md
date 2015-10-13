@@ -2,7 +2,7 @@
 
 ## Description
 
-Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods of /r/hardwareswap and modified for use by /u/chankster, /u/NotMelNoGuitars, and /u/thelectronicnub
+Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods of /r/hardwareswap and modified for use by /u/chankster, /u/NotMelNoGuitars, and /u/thelectronicnub. There are two currently running instances of the bot, /u/hwsbot and /u/mechkbot
 
 ## Files
 
