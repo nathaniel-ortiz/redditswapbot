@@ -16,6 +16,7 @@ cfg_file.read(path_to_cfg)
 username = cfg_file.get('reddit', 'username')
 password = cfg_file.get('reddit', 'password')
 subreddit = cfg_file.get('reddit', 'subreddit')
+curr_id = cfg_file.get('trade', 'link_id')
 
 logger=LoggerManager().getLogger(__name__)
 
@@ -50,6 +51,7 @@ def change_sidebar(r, post_id, month):
 	sr.update_settings(description = new_sb)
 
 def update_config(post_id):
+	cfg_file.set('trade', 'prevlink_id', curr_id)
 	cfg_file.set('trade', 'link_id', post_id)
 	with open(r'config.cfg', 'wb') as configfile:
 		cfg_file.write(configfile)

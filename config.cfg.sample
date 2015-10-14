@@ -16,6 +16,7 @@ database = MYSQL_DATABASE
 
 [trade]
 link_id = TRADE_POST_LINK_ID
+prevlink_id = PREVIOUS_MONTH_TRADE_POST_LINK_ID
 equal = You have confirmed a trade under your own post, this action has been reported to the Moderators.
 age = Your account has been created recently, this has been sent for further review.
 karma = You do not have enough karma, this has been sent for further review.

@@ -8,6 +8,15 @@ import datetime
 from datetime import datetime, timedelta
 from time import sleep, time
 from log_conf import LoggerManager
+import argparse
+
+# determine curr or prev month
+parser = argparse.ArgumentParser(description="Process flairs")
+parser.add_argument("-m", action="store", dest="month", default="curr", help="curr or prev month? (default: curr)")
+results = parser.parse_args()
+conf_link_id = 'link_id'
+if results.month == "prev":
+	conf_link_id = 'prevlink_id'
 
 # load config file
 containing_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -18,7 +27,7 @@ username = cfg_file.get('reddit', 'username')
 password = cfg_file.get('reddit', 'password')
 subreddit = cfg_file.get('reddit', 'subreddit')
 multiprocess = cfg_file.get('reddit', 'multiprocess')
-link_id = cfg_file.get('trade', 'link_id')
+link_id = cfg_file.get('trade', conf_link_id)
 equal_warning = cfg_file.get('trade', 'equal')
 age_warning = cfg_file.get('trade', 'age')
 karma_warning = cfg_file.get('trade', 'karma')
