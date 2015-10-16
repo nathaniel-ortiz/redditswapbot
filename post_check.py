@@ -94,7 +94,8 @@ def main():
 										if comment.author.name == username:
 											botcomment = 1
 								#otherwise spit out user information
-								if botcomment == 0 and ( not metaMatch or post.link_flair_css_class != "meta" ):
+								#have to check both flair class and regex match.  (flair class is none if just set)
+								if botcomment == 0 and post.link_flair_css_class not in ["meta", "groupbuy", "interestcheck"] and not metaMatch and not gbMatch and not icMatch:
 									age = str(datetime.utcfromtimestamp(post.author.created_utc))
 									if str(post.author_flair_text) == "None":
 										heatware = "None"
