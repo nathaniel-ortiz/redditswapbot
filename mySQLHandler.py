@@ -68,19 +68,19 @@ class mySQLHandler(logging.Handler):
     ThreadName
     )
     VALUES (
-    '%(dbtime)s',
-    '%(name)s',
-    %(levelno)d,
-    '%(levelname)s',
-    '%(msg)s',
+    %(dbtime)s,
+    %(name)s,
+    '%(levelno)s',
+    %(levelname)s,
+    %(msg)s,
     '%(args)s',
-    '%(module)s',
-    '%(funcName)s',
-    %(lineno)d,
-    '%(exc_text)s',
-    %(process)d,
+    %(module)s,
+    %(funcName)s,
+    '%(lineno)s',
+    %(exc_text)s,
+    '%(process)s',
     '%(thread)s',
-    '%(threadName)s'
+    %(threadName)s
     );
     """
  
@@ -165,7 +165,7 @@ class mySQLHandler(logging.Handler):
         else:
             record.exc_text = ""
         # Insert log record:
-        sql = mySQLHandler.insertion_sql % record.__dict__
+        sql = mySQLHandler.insertion_sql
         try:
             conn=MySQLdb.connect(host=self.db['host'],port=self.db['port'],user=self.db['dbuser'],passwd=self.db['dbpassword'],db=self.db['dbname'])
         except _mysql_exceptions, e:
@@ -176,7 +176,7 @@ class mySQLHandler(logging.Handler):
             exit(-1)
         cur = conn.cursor()
         try:
-            cur.execute(sql)
+            cur.execute(sql, (record.__dict__))
         except _mysql_exceptions.ProgrammingError as e:
             errno, errstr = e.args
             if not errno == 1146:
@@ -185,7 +185,6 @@ class mySQLHandler(logging.Handler):
             cur = conn.cursor() # recreate it (is it mandatory?)
             try:            # try to recreate table
                 cur.execute(mySQLHandler.initial_sql)
-        
             except _mysql_exceptions as e:
                 # definitly can't work...
                 conn.rollback()
