@@ -136,15 +136,9 @@ def main():
 			if not check_self_reply():
 				continue
 
-			print "Checking name in post"
 			if not comment.author.name.lower() in parent.body.lower():
-				print "Not in parent"
 				continue
 			else:
-				print "It was in parent"
-
-			print "Comment author: " + comment.author.name.lower()
-			print "Parent body: " + parent.body.lower()
 
 			# Check Account Age and Karma
 			if not verify(comment):
