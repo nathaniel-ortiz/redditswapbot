@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from time import sleep, time
 from log_conf import LoggerManager
 import argparse
-
+from pprint import pprint
 # determine curr or prev month
 parser = argparse.ArgumentParser(description="Process flairs")
 parser.add_argument("-m", action="store", dest="month", default="curr", help="curr or prev month? (default: curr)")
@@ -135,6 +135,16 @@ def main():
 				continue
 			if not check_self_reply():
 				continue
+
+			print "Checking name in post"
+			if not comment.author.name.lower() in parent.body.lower():
+				print "Not in parent"
+				continue
+			else:
+				print "It was in parent"
+
+			print "Comment author: " + comment.author.name.lower()
+			print "Parent body: " + parent.body.lower()
 
 			# Check Account Age and Karma
 			if not verify(comment):
