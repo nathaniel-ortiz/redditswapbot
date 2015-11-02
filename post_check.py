@@ -5,6 +5,7 @@ from ConfigParser import SafeConfigParser
 import praw
 import re
 import mySQLHandler
+import unicodedata
 from datetime import datetime, timedelta
 from time import sleep, time
 from pprint import pprint
@@ -40,12 +41,13 @@ def main():
 				data = r.get_subreddit(subreddit).get_new(limit=20)
 				for post in data:
 					if post.id not in already_done:
+						clean_title = unicodedata.normalize('NFKD', post.title).encode('ascii','ignore')
 						already_done.append(post.id)
 						matchObj = re.search("(^\[[A-Z]{2,}.*\].*\[H\].*\[W\].*)|(^\[META\].*)|(^\[GB\].*)|(^\[IC\].*)|(^\[Artisan\].*)", post.title)
 						match2Obj = re.search("(\[selling\])|(\[buying\])", post.title, re.IGNORECASE)
 						if (not matchObj or match2Obj) and not post.distinguished:
 							if post.author.name != username:
-								logger.warn('Removed post: '+post.title+' by '+post.author.name)
+								logger.warn('Removed post: '+clean_title+' by '+post.author.name)
 								if not post.approved_by:
 									post.report()
 									post.add_comment('REMOVED: Please read the [wiki](/r/' + subreddit + '/wiki/rules/rules) for posting rules').distinguish()
@@ -63,27 +65,27 @@ def main():
 								if not post.distinguished:
 									if sellingMatch:
 										r.set_flair(subreddit, post, 'Selling', 'selling')
-										logger.info("SELL: "+post.title)
+										logger.info("SELL: "+clean_title)
 									elif buyingMatch:
 										r.set_flair(subreddit, post, 'Buying', 'buying')
-										logger.info("BUY: "+post.title)
+										logger.info("BUY: "+clean_title)
 									elif metaMatch:
 										r.set_flair(subreddit, post, 'META', 'meta')
-										logger.info("META: "+post.title)
+										logger.info("META: "+clean_title)
 									elif icMatch:
 										r.set_flair(subreddit, post, 'Interest Check', 'interestcheck')
-										logger.info("IC: "+post.title)
+										logger.info("IC: "+clean_title)
 									elif gbMatch:
 										r.set_flair(subreddit, post, 'Group Buy', 'groupbuy')
-										logger.info("GB: "+post.title)
+										logger.info("GB: "+clean_title)
 									elif artisanMatch:
 										r.set_flair(subreddit, post, 'Artisan', 'artisan')
-										logger.info("Artisan: "+post.title)
+										logger.info("Artisan: "+clean_title)
 									else:
 										r.set_flair(subreddit, post, 'Trading', 'trading')
-										logger.info("TRADE: "+post.title)
+										logger.info("TRADE: "+clean_title)
 							else:
-								logger.info("OTHER: "+post.title)
+								logger.info("OTHER: "+clean_title)
 							#check comments for info from bot
 							if not post.distinguished:
 								post.replace_more_comments(limit=None, threshold=0)
@@ -107,6 +109,7 @@ def main():
 				sleep(120)
 		except Exception as e:
 			logger.error(e)
+			sleep(120)
 
 if __name__ == '__main__':
 	main()
