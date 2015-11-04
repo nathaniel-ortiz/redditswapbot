@@ -50,7 +50,7 @@ def main():
 								logger.warn('Removed post: '+clean_title+' by '+post.author.name)
 								if not post.approved_by:
 									post.report()
-									post.add_comment('REMOVED: Please read the [wiki](/r/' + subreddit + '/wiki/rules/rules) for posting rules').distinguish()
+									post.add_comment('REMOVED: Your post was automatically removed due to an incorrect title. Please read the [wiki](/r/' + subreddit + '/wiki/rules/rules) for posting rules').distinguish()
 									post.remove()
 								else:
 									logger.warn('Bad post approved by: '+post.approved_by.name)
