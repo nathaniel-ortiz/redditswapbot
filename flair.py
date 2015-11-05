@@ -138,7 +138,6 @@ def main():
 
 			if not comment.author.name.lower() in parent.body.lower():
 				continue
-			else:
 
 			# Check Account Age and Karma
 			if not verify(comment):
