@@ -35,8 +35,6 @@ def post_thread(r,month):
 If more proof is requested by the bot please send a [modmail](http://www.reddit.com/message/compose?to=%%2Fr%%2F%s) including the following:
 
 * Screenshot of PM\'s between the users
-* Screenshot of Tracking (may also include link)
-* Screenshot of PayPal transaction
 * Permalink to trade confirmed thread comment''' % subreddit, send_replies=False)
 	post.distinguish(as_made_by='mod')
 	post.sticky(bottom=False)
