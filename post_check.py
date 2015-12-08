@@ -43,7 +43,7 @@ def main():
 					if post.id not in already_done:
 						clean_title = unicodedata.normalize('NFKD', post.title).encode('ascii','ignore')
 						already_done.append(post.id)
-						matchObj = re.search("(^\[[A-Z]{2,}.*\].*\[H\].*\[W\].*)|(^\[META\].*)|(^\[GB\].*)|(^\[IC\].*)|(^\[Artisan\].*)", post.title)
+						matchObj = re.search("(^\[[A-Z]{2,}.*\].*\[H\].*\[W\].*)|(^\[META\].*)|(^\[GB\].*)|(^\[IC\].*)|(^\[Artisan\].*)|(^\[Vendor\].*)", post.title)
 						match2Obj = re.search("(\[selling\])|(\[buying\])", post.title, re.IGNORECASE)
 						if (not matchObj or match2Obj) and not post.distinguished:
 							if post.author.name != username:
@@ -61,6 +61,7 @@ def main():
 							icMatch = re.search("\[IC\].*", post.title)
 							gbMatch = re.search("\[GB\].*", post.title)
 							artisanMatch = re.search("\[Artisan\].*", post.title)
+							vendorMatch = re.search("\[Vendor\].*", post.title)
 							if not post.link_flair_text:
 								if not post.distinguished:
 									if sellingMatch:
@@ -81,6 +82,9 @@ def main():
 									elif artisanMatch:
 										r.set_flair(subreddit, post, 'Artisan', 'artisan')
 										logger.info("Artisan: "+clean_title)
+									elif vendorMatch:
+										r.set_flair(subreddit, post, 'Vendor', 'vendor')
+										logger.info("Vendor: "+clean_title)
 									else:
 										r.set_flair(subreddit, post, 'Trading', 'trading')
 										logger.info("TRADE: "+clean_title)
