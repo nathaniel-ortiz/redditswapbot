@@ -30,5 +30,5 @@ link_id = PRICE_CHECK_POST_LINK_ID
 
 [heatware]
 link_id = HEATWARE_POST_LINK_ID
-regex = (https?://(?:www\.)?heatware\.com/eval\.php\?id=\d{1,7})
+regex = ^(https?:\/\/(?:www\.)?heatware\.com\/((eval\.php\?id=)|(u\/))\d{1,7})$
 respond = no
