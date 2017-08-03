@@ -2,8 +2,9 @@
 user_agent = %(YOUR_USERNAME)s
 username = YOUR_USERNAME
 password = YOUR_PASSWORD
+app_key = YOUR APPKEY
+app_secret = YOUR_APPSECRET
 subreddit = YOUR_SUBREDDIT
-multiprocess = false
 
 [logging]
 dest = mysql
@@ -31,4 +32,4 @@ link_id = PRICE_CHECK_POST_LINK_ID
 [heatware]
 link_id = HEATWARE_POST_LINK_ID
 regex = ^(https?:\/\/(?:www\.)?heatware\.com\/((eval\.php\?id=)|(u\/))\d{1,7})$
-respond = no
+respond = yes

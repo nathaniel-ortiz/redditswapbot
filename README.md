@@ -2,7 +2,7 @@
 
 ## Description
 
-Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods of /r/hardwareswap and modified for use by /u/chankster, /u/NotMelNoGuitars, and /u/thelectronicnub. There are two currently running instances of the bot, /u/hwsbot and /u/mechkbot
+Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods of /r/hardwareswap and modified for use by /u/chankster, /u/NotMelNoGuitars, and /u/thelectronicnub. There are three currently running instances of the bot, /u/hwsbot, /u/mechkbot, /u/funkoswapbot.  Finally updated to support Praw v5.
 
 ## Files
 
@@ -14,5 +14,3 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
 
 ## TODO
 
-* Upgrade to OAuth2, since password-based login will be deprecated soon
-* Implement multiproccess 
