@@ -15,56 +15,56 @@ path_to_cfg = os.path.join(containing_dir, 'config.cfg')
 cfg_file.read(path_to_cfg)
 username = cfg_file.get('reddit', 'username')
 password = cfg_file.get('reddit', 'password')
+app_key = cfg_file.get('reddit', 'app_key')
+app_secret = cfg_file.get('reddit', 'app_secret')
 subreddit = cfg_file.get('reddit', 'subreddit')
 link_id = cfg_file.get('heatware', 'link_id')
 respond = cfg_file.get('heatware', 'respond')
 regex = cfg_file.get('heatware', 'regex')
-multiprocess = cfg_file.get('reddit', 'multiprocess')
 
 # Configure logging
-logger=LoggerManager().getLogger(__name__)
+logger = LoggerManager().getLogger(__name__)
 
 def main():
-	try:
-		logger.info('Logging in as /u/'+username)
-		if multiprocess == 'true':
-			handler = MultiprocessHandler()
-			r = praw.Reddit(user_agent=username, handler=handler)
-		else:
-			r = praw.Reddit(user_agent=username)
-		r.login(username, password)
+    try:
+        logger.info('Logging in as /u/' + username)
+        r = praw.Reddit(client_id=app_key,
+                        client_secret=app_secret,
+                        username=username,
+                        password=password,
+                        user_agent=username)
 
-		# Get the submission and the comments
-		submission = r.get_submission(submission_id=link_id)
-		submission.replace_more_comments(limit=None, threshold=0)
-		flat_comments = list(praw.helpers.flatten_tree(submission.comments))
+        # Get the submission and the comments
+        submission = r.submission(id=link_id)
+        submission.comments.replace_more(limit=None, threshold=0)
+        flat_comments = submission.comments.list()
 
-		for comment in flat_comments:
-			logger.debug("Processing comment: " + comment.id)
-			if not hasattr(comment, 'author'):
-				continue
-			if comment.is_root == True:
-				heatware = re.search(regex, comment.body)
-				if heatware:
-					url = heatware.group(0)
-					if not comment.author_flair_text:
-						replies_flat = list(praw.helpers.flatten_tree(comment.replies))
-						for reply in replies_flat:
-							if reply.author: 
-								if str(reply.author.name) == username:
-									break
-						else:
-							if comment.author:
-								if comment.author_flair_css_class:
-									comment.subreddit.set_flair(comment.author, url, comment.author_flair_css_class)
-								else:
-									comment.subreddit.set_flair(comment.author, url, 'i-none')
-								logger.info('Set ' + comment.author.name + '\'s heatware to ' + url)
-								if respond == 'yes':
-									comment.reply('added')
+        for comment in flat_comments:
+            logger.debug("Processing comment: " + comment.id)
+            if not hasattr(comment, 'author'):
+                continue
+            if comment.is_root is True:
+                heatware = re.search(regex, comment.body)
+                if heatware:
+                    url = heatware.group(0)
+                    if not comment.author_flair_text:
+                        replies_flat = comment.replies.list()
+                        for reply in replies_flat:
+                            if reply.author:
+                                if str(reply.author.name) == username:
+                                    break
+                        else:
+                            if comment.author:
+                                if comment.author_flair_css_class:
+                                    r.subreddit(subreddit).flair.set(comment.author, url, comment.author_flair_css_class)
+                                else:
+                                    r.subreddit(subreddit).flair.set(comment.author, url, 'i-none')
+                                logger.info('Set ' + comment.author.name + '\'s heatware to ' + url)
+                                if respond == 'yes':
+                                    comment.reply('added')
 
-	except Exception as e:
-		logger.error(e)
+    except Exception as e:
+        logger.error(e)
 
 if __name__ == '__main__':
-	main()
+    main()
