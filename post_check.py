@@ -106,6 +106,17 @@ def main():
                             else:
                                 log_msg = "OTHER: " + clean_title
 
+                            if post.link_flair_text == 'Selling' or post.link_flair_text == 'Trading':
+                                #logging.info('Checking timestamp')
+                                timestampMatch = re.search('http[s]?:\/\/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', post.selftext, re.IGNORECASE)
+                                if not timestampMatch:
+                                    log_msg = 'BAD POST (timestamp) - ' + post.id + ' - ' + clean_title + ' - by: ' + post.author.name
+                                    log_msg_level = 'warn'
+                                    post.report('Missing timestamp')
+                                    post.reply('REMOVED: Missing timestamps. Please read [wiki](/r/' + subreddit 'wiki/rules/rules) for posting rules. **Do not delete or repost**, just add the timestamp to the post and send a modmail indicating it\'s been added.\n\nIf this is a buying post, you may repost but do not include money related terms on the [W] side of the title.').mod.distinguish()
+                                    post.mod.remove()
+                                    removedpost = True
+
                             curs.execute('''SELECT username, lastid, lastpost as "lastpost [timestamp]" FROM flair WHERE username=?''', (post.author.name,))
 
                             row = curs.fetchone()
@@ -117,7 +128,7 @@ def main():
                                 else:
                                     lastid = row['lastid']
                                 if row['lastpost']:
-                                    if (((((datetime.utcnow() - row['lastpost']).total_seconds() / 3600) < 24) and (((datetime.utcnow() - row['lastpost']).total_seconds() / 60) > 10)) and (lastid != "") and (post.id != lastid) and not post.approved_by):
+                                    if (((((datetime.utcnow() - row['lastpost']).total_seconds() / 3600) < 24) and (((datetime.utcnow() - row['lastpost']).total_seconds() / 60) > 5)) and (lastid != "") and (post.id != lastid) and not post.approved_by):
                                         log_msg = 'BAD POST (24hr) - ' + post.id + ' - ' + clean_title + ' - by: ' + post.author.name
                                         log_msg_level = 'warn'
                                         post.report('24 hour rule')

@@ -10,7 +10,8 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
   * Watches the current confirmed trade post (specified in config.cfg) and updates user flair.
   * Normally fired via cronjob.
   * Accepts -m (curr,prev) to allow for processing of the previous month.
-  * Checks flairs against a database and will warn if the flair deviates more than the value in the config.  Helps to catch users that accidently hide flair and end up getting reset.  **The flair import must be run before this can be run!**
+  * Checks flairs against a database and will warn if the flair deviates more than the value in the config.  Helps to catch users that accidently hide flair and end up getting reset.
+  * **The flair import must be run before this can be run!**
 * **heatware.py**
   * Watches the current heatware thread (specified in config.cfg) and updates user flair.
   * Normally fired via cronjob.
@@ -18,7 +19,8 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
   * Monitors all new posts to ensure it matches specified regexs.
   * Attempts to set post flair based on title.
   * Adds comment to each post with specific details for the OP.
-  * Removes posts created < 24 hours after the previous post
+  * Removes posts created < 24 hours after the previous post.
+  * Checks all selling and trading posts for a timestamp.
   * **The flair import script must be run before this script**
 * **monthly_trade_post.py**
   * Creates a new trade post, stickies it in the top position, updates the sidebar based on regex, and updates config file.
