@@ -4,6 +4,7 @@ import sys, os
 from ConfigParser import SafeConfigParser
 import praw
 import re
+import sqlite3
 import unicodedata
 from datetime import datetime, timedelta
 from time import sleep, time
@@ -27,6 +28,14 @@ logger = LoggerManager().getLogger(__name__)
 def main():
     while True:
         try:
+            try:
+                con = sqlite3.connect(flair_db, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+                con.row_factory = sqlite3.Row
+            except sqlite3.Error, e:
+                logger.error("Error %s:" % e.args[0])
+
+            curs = con.cursor()
+
             logger.debug('Logging in as /u/' + username)
             r = praw.Reddit(client_id=app_key,
                             client_secret=app_secret,
@@ -97,6 +106,25 @@ def main():
                             else:
                                 log_msg = "OTHER: " + clean_title
 
+                            curs.execute('''SELECT username, lastid, lastpost as "lastpost [timestamp]" FROM flair WHERE username=?''', (post.author.name,))
+
+                            row = curs.fetchone()
+
+                            # ensure that time of last post is > 24hrs
+                            if row is not None:
+                                if not row['lastid']:
+                                    lastid = ""
+                                else:
+                                    lastid = row['lastid']
+                                if row['lastpost']:
+                                    if (((((datetime.utcnow() - row['lastpost']).total_seconds() / 3600) < 24) and (((datetime.utcnow() - row['lastpost']).total_seconds() / 60) > 10)) and (lastid != "") and (post.id != lastid) and not post.approved_by):
+                                        log_msg = 'BAD POST (24hr) - ' + post.id + ' - ' + clean_title + ' - by: ' + post.author.name
+                                        log_msg_level = 'warn'
+                                        post.report('24 hour rule')
+                                        post.reply('REMOVED: Posting too frequently.  Please read [wiki](/r/' + subreddit + '/wiki/rules/rules) for posting time limits.  If you believe this is a mistake, please message the [moderators](http://www.reddit.com/message/compose?to=%2Fr%2F' + subreddit + ').').mod.distinguish()
+                                        post.mod.remove()
+                                        removedpost = True
+
                             # check comments for info from bot
                             if not post.distinguished:
                                 post.comments.replace_more(limit=0)
@@ -129,6 +157,16 @@ def main():
                                 logger.warning(log_msg)
                             else:
                                 logger.info(log_msg)
+
+                            # add time to sql
+                            if row is not None:
+                                if (post.id == lastid):
+                                    continue
+                            if (removedpost):
+                                continue
+                            curs.execute('''UPDATE OR IGNORE flair SET lastpost=?, lastid=? WHERE username=?''', (datetime.utcnow(), post.id, post.author.name, ))
+                            curs.execute('''INSERT OR IGNORE INTO flair (username, lastpost, lastid) VALUES (?, ?, ?)''', (post.author.name, datetime.utcnow(), post.id, ))
+                            con.commit()
 
                 logger.debug('Sleeping for 2 minutes')
                 sleep(120)
