@@ -2,6 +2,7 @@
 
 import sys, os
 import praw
+import sqlite3
 import datetime
 from ConfigParser import SafeConfigParser
 from datetime import datetime, timedelta
@@ -30,9 +31,12 @@ link_id = cfg_file.get('trade', conf_link_id)
 equal_warning = cfg_file.get('trade', 'equal')
 age_warning = cfg_file.get('trade', 'age')
 karma_warning = cfg_file.get('trade', 'karma')
+dev_warning = cfg_file.get('trade', 'dev')
 added_msg = cfg_file.get('trade', 'added')
 age_check = int(cfg_file.get('trade', 'age_check'))
 karma_check = int(cfg_file.get('trade', 'karma_check'))
+flair_db = cfg_file.get('trade', 'flair_db')
+flair_dev = cfg_file.get('trade', 'flair_dev')
 
 # Configure logging
 logger = LoggerManager().getLogger(__name__)
@@ -67,6 +71,28 @@ def main():
         karma = item.author.link_karma + item.author.comment_karma
         age = (datetime.utcnow() - datetime.utcfromtimestamp(item.author.created_utc)).days
 
+        curs.execute('''SELECT * FROM flair WHERE username=?''', (item.author.name,))
+
+        row = curs.fetchone()
+
+        if row is not None:
+            if not item.author_flair_css_class:
+                item.author_flair_css_class = ''
+            if not row['flair_css_class']:
+                db_flair_css_class = ''
+            if item.author_flair_css_class == "i-mod":
+                return True
+            if (int(item.author_flair_css_class.translate(None, 'i-') or 0) > (int(row['flair_css_class'].translate(None, 'i-') or 0) + int(flair_dev))) or (int(item.author_flair_css_class.translate(None, 'i-') or 0) < (int(row['flair_css_class'].translate(None, 'i-') or 0) - int(flair_dev))):
+                logger.info('Rechecking deviation: ' + item.author.name)
+                second_chance = next(r.subreddit(subreddit).flair(item.author.name))
+                if second_chance['flair_css_class'] == item.author_flair_css_class:
+                    item.report('Flair: Deviation between DB and Reddit')
+                    #item.reply(dev_warning)
+                    r.subreddit(subreddit).message('Flair Devation Detected', 'User: /u/' + item.author.name + '\n\nDB: ' + str(row['flair_css_class']) + '\n\nReddit: ' + str(item.author_flair_css_class))
+                    logger.info('Flair Deviation - User: ' + item.author.name + ', DB: ' + str(row['flair_css_class']) + ', Reddit: ' + str(item.author_flair_css_class))
+                    save()
+                    return True
+
         if item.author_flair_css_class < 1:
             if age < age_check:
                 item.report('Flair: Account Age')
@@ -94,6 +120,10 @@ def main():
         if item.author_flair_css_class != 'i-mod':
             r.subreddit(subreddit).flair.set(item.author, item.author_flair_text, item.author_flair_css_class)
             logger.info('Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)
+            # Set flair in database
+            curs.execute('''UPDATE OR IGNORE flair SET flair_text=?, flair_css_class=? WHERE username=?''', (item.author_flair_text, item.author_flair_css_class, item.author.name, ))
+            curs.execute('''INSERT OR IGNORE INTO flair (username, flair_text, flair_css_class) VALUES (?, ?, ?)''', (item.author.name, item.author_flair_text, item.author_flair_css_class, ))
+            con.commit()
 
         for com in flat_comments:
             if hasattr(com.author, 'name'):
@@ -108,6 +138,14 @@ def main():
         # Load old comments
         with open(link_id + ".log", 'a+') as myfile:
             completed = myfile.read()
+
+        try:
+            con = sqlite3.connect(flair_db)
+            con.row_factory = sqlite3.Row
+        except sqlite3.Error, e:
+            logger.exception("Error %s:" % e.args[0])
+
+        curs = con.cursor()
 
         # Log in
         logger.info('Logging in as /u/' + username)
@@ -126,7 +164,6 @@ def main():
         logger.info('Finished grabbing comments')
 
         for comment in flat_comments:
-            logger.debug("Processing comment: " + comment.id)
             if not hasattr(comment, 'author'):
                 continue
             if not conditions():
@@ -140,7 +177,8 @@ def main():
             if not comment.author.name.lower() in parent.body.lower():
                 continue
 
-            # Check Account Age and Karma
+            # Check Account Age, Karma, and Flair Deviation
+            logger.debug('Verifying comment id: ' + comment.id + ' and parent id: ' + parent.id)
             if not verify(comment):
                 continue
             if not verify(parent):

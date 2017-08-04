@@ -25,6 +25,9 @@ added = added
 sleep = 20
 karma_check = 10
 age_check = 14
+flair = flair.json
+flair_db = flair.db
+flair_dev = 2
 
 [price]
 link_id = PRICE_CHECK_POST_LINK_ID
