@@ -11,6 +11,7 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
 * post_check.py - Monitors all new posts to ensure it matches specified regexs.  Attempts to set post flair based on title.  Adds comment to each post with specific details for the OP.
 * monthly_trade_post.py - Creates a new trade post, stickies it in the top position, updates the sidebar based on regex, and updates config file.  Normally fired via cronjob.
 * monthly_price_post.py - Creates a new price post, stickies it in the bottom position, updates the sidebar based on regex, updates config file.  Normally fired via cronjob.
+* util/flair_import - Used to seed the sqlite database with initial flair values.  Extract the current subreddit flair values to json using [modutils](https://github.com/praw-dev/prawtools).  Must be done before running flair.py otherwise any flair > flairdev in settings will be reported as a deviation.
 
 ## TODO
 
