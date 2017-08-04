@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 import sys, os
+import re
 import praw
 import sqlite3
 import datetime
@@ -44,8 +45,6 @@ logger = LoggerManager().getLogger(__name__)
 def main():
 
     def conditions():
-        if comment.id in completed:
-            return False
         if not hasattr(comment.author, 'name'):
             return False
         if 'confirm' not in comment.body.lower():
@@ -118,6 +117,7 @@ def main():
 
     def flair(item):
         if item.author_flair_css_class != 'i-mod':
+            # Set flair in subreddit
             r.subreddit(subreddit).flair.set(item.author, item.author_flair_text, item.author_flair_css_class)
             logger.info('Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)
             # Set flair in database
@@ -155,6 +155,8 @@ def main():
                         password=password,
                         user_agent=username)
 
+        mods = r.subreddit(subreddit).moderator()
+
         # Get the submission and the comments
         logger.info('Starting to grab comments')
         submission = r.submission(id=link_id)
@@ -165,6 +167,8 @@ def main():
 
         for comment in flat_comments:
             if not hasattr(comment, 'author'):
+                continue
+            if comment.id in completed:
                 continue
             if not conditions():
                 continue
@@ -193,6 +197,56 @@ def main():
             flair(parent)
             comment.reply(added_msg)
             save()
+
+        for msg in r.inbox.unread(limit=None):
+            if not msg.was_comment:
+                if msg.author in mods:
+                    logger.info('Processing PM from mod: ' + msg.author.name)
+                    mod_link = re.search('^(https?:\/\/(?:www\.)?reddit\.com\/r\/.*\/comments\/.{6}\/.*\/.{7}\/)$', msg.body)
+                    if not mod_link:
+                        msg.reply('You have submitted an invalid URL')
+                        msg.mark_as_read()
+                        continue
+                    else:
+                        match = re.search(r'[^/]+(?=\/$|$)', msg.body)
+                        check_id = match.group(0)
+                        tocheck = r.comment(id=check_id).refresh()
+                        flat_comments = tocheck.replies.list()
+                        for comment in flat_comments:
+                            if not hasattr(comment, 'author'):
+                                continue
+                            if comment.mod_reports:
+                                comment.mod.approve()
+                            if comment.author.name == username:
+                                comment.mod.remove()
+                                continue
+
+                            if parent.mod_reports:
+                                parent.mod.approve()
+
+                            parent = tocheck
+
+                            logger.info('Mod - Verifying comment id: ' + comment.id + ' and parent id: ' + parent.id)
+
+                            if not conditions():
+                                continue
+                            if not hasattr(parent.author, 'link_karma'):
+                                continue
+
+                            values(comment)
+                            values(parent)
+
+                            flair(comment)
+                            flair(parent)
+                            comment.reply(added_msg)
+                            msg.reply('Trade flair added for ' + comment.author.name + ' and ' + parent.author.name)
+                            msg.mark_read()
+                else:
+                    logger.info('Processing PM from user: ' + msg.author.name)
+                    msg.reply('[BEEP BOOP! I AM A BOT!](http://i.imgur.com/9dJ2quO.gif)')
+                    msg.mark_read()
+
+        con.close()
 
     except Exception as e:
         logger.error(e)
