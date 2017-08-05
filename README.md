@@ -33,6 +33,8 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
   * Used to seed the sqlite database with initial flair values.
   * Extract the current subreddit flair values to json using [modutils](https://github.com/praw-dev/prawtools).
   * **Must be done before running flair.py otherwise any flair > flairdev in config will be reported as a deviation.**
+* **util/flair_sub_import.py**
+  * Set subreddit flair via csv or json files
 
 ## TODO
 
