@@ -29,7 +29,7 @@ Scripts that are used on /r/mechmarket and /r/hardwareswap created by the mods o
 * **monthly_price_post.py**
   * Creates a new price post, stickies it in the bottom position, updates the sidebar based on regex, updates config file.
   * Normally fired via cronjob.
-* **util/flair_import** 
+* **util/flair_sql_import.py** 
   * Used to seed the sqlite database with initial flair values.
   * Extract the current subreddit flair values to json using [modutils](https://github.com/praw-dev/prawtools).
   * **Must be done before running flair.py otherwise any flair > flairdev in config will be reported as a deviation.**
