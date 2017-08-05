@@ -27,6 +27,7 @@ app_key = cfg_file.get('reddit', 'app_key')
 app_secret = cfg_file.get('reddit', 'app_secret')
 subreddit = cfg_file.get('reddit', 'subreddit')
 link_id = cfg_file.get('trade', conf_link_id)
+equal_warning = cfg_file.get('trade', 'equal')
 age_warning = cfg_file.get('trade', 'age')
 karma_warning = cfg_file.get('trade', 'karma')
 added_msg = cfg_file.get('trade', 'added')
@@ -53,9 +54,10 @@ def main():
             return False
         return True
 
-    def check_self_reply(comment, parent):
+    def check_self_reply():
         if comment.author.name == parent.author.name:
-            comment.report('Flair: Self Reply')
+            item.reply(equal_warning)
+            item.report('Flair: Self Reply')
             parent.report('Flair: Self Reply')
             save()
             return False
@@ -132,7 +134,7 @@ def main():
             parent = [com for com in flat_comments if com.fullname == comment.parent_id][0]
             if not hasattr(parent.author, 'link_karma'):
                 continue
-            if not check_self_reply(comment, parent):
+            if not check_self_reply():
                 continue
 
             if not comment.author.name.lower() in parent.body.lower():
