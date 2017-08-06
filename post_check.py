@@ -23,6 +23,8 @@ subreddit = cfg_file.get('reddit', 'subreddit')
 flair_db = cfg_file.get('trade', 'flair_db')
 regex = cfg_file.get('post_check', 'regex')
 rules = cfg_file.get('post_check', 'rules')
+upper_hour = cfg_file.getint('post_check', 'upper_hour')
+lower_min = cfg_file.getint('post_check', 'lower_min')
 
 # configure logging
 logger = LoggerManager().getLogger(__name__)
@@ -130,7 +132,7 @@ def main():
                                 else:
                                     lastid = row['lastid']
                                 if row['lastpost']:
-                                    if (((((datetime.utcnow() - row['lastpost']).total_seconds() / 3600) < 24) and (((datetime.utcnow() - row['lastpost']).total_seconds() / 60) > 5)) and (lastid != "") and (post.id != lastid) and not post.approved_by):
+                                    if (((((datetime.utcnow() - row['lastpost']).total_seconds() / 3600) < upper_hour) and (((datetime.utcnow() - row['lastpost']).total_seconds() / 60) > lower_min)) and (lastid != "") and (post.id != lastid) and not post.approved_by):
                                         log_msg = 'BAD POST (24hr) - ' + post.id + ' - ' + clean_title + ' - by: ' + post.author.name
                                         log_msg_level = 'warn'
                                         post.report('24 hour rule')
