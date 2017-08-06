@@ -21,6 +21,8 @@ app_key = cfg_file.get('reddit', 'app_key')
 app_secret = cfg_file.get('reddit', 'app_secret')
 subreddit = cfg_file.get('reddit', 'subreddit')
 flair_db = cfg_file.get('trade', 'flair_db')
+regex = cfg_file.get('post_check', 'regex')
+rules = cfg_file.get('post_check', 'rules')
 
 # configure logging
 logger = LoggerManager().getLogger(__name__)
@@ -52,14 +54,14 @@ def main():
                         clean_title = unicodedata.normalize('NFKD', post.title).encode('ascii', 'ignore')
                         removedpost = False
                         already_done.append(post.id)
-                        matchObj = re.search("\[(?:AF|AX|AL|DZ|AD|AO|AI|AQ|AG|AR|AM|AW|AU|EU-AT|AZ|BS|BH|BD|BB|BY|EU-BE|BZ|BJ|BM|BT|BO|BQ|BA|BW|BV|BR|IO|BN|EU-BG|BF|BI|KH|CM|CV|KY|CF|TD|CL|CN|CX|CC|CO|KM|CG|CD|CK|CR|CI|EU-HR|CU|CW|EU-CY|EU-CZ|EU-DK|DJ|DM|DO|EC|EG|SV|GQ|ER|EU-EE|ET|FK|FO|FJ|EU-FI|EU-FR|GF|PF|TF|GA|GM|GE|EU-DE|GH|GI|EU-GR|GL|GD|GP|GT|GG|GN|GW|GY|HT|HM|VA|HN|HK|EU-HU|IS|IN|ID|IR|IQ|EU-IE|IM|IL|EU-IT|JM|JP|JE|JO|KZ|KE|KI|KP|KR|KW|KG|LA|EU-LV|LB|LS|LR|LY|LI|EU-LT|EU-LU|MO|MK|MG|MW|MY|MV|ML|EU-MT|MH|MQ|MR|MU|YT|MX|FM|MD|MC|MN|ME|MS|MA|MZ|MM|NA|NR|NP|EU-NL|NC|NZ|NI|NE|NG|NU|NF|NO|OM|PK|PW|PS|PA|PG|PY|PE|PH|PN|EU-PL|EU-PT|QA|RE|EU-RO|RU|RW|BL|SH|KN|LC|MF|PM|VC|WS|SM|ST|SA|SN|RS|SC|SL|SG|SX|EU-SK|EU-SI|SB|SO|ZA|GS|SS|EU-ES|LK|SD|SR|SJ|SZ|EU-SE|CH|SY|TW|TJ|TZ|TH|TL|TG|TK|TO|TT|TN|TR|TM|TC|TV|UG|UA|AE|EU-UK|UY|UZ|VU|VE|VN|VG|WF|EH|YE|ZM|ZW|US-DC|US-AL|US-AK|US-AZ|US-AR|US-CA|US-CO|US-CT|US-DE|US-FL|US-GA|US-HI|US-ID|US-IL|US-IN|US-IA|US-KS|US-KY|US-LA|US-ME|US-MD|US-MA|US-MI|US-MN|US-MS|US-MO|US-MT|US-NE|US-NV|US-NH|US-NJ|US-NM|US-NY|US-NC|US-ND|US-OH|US-OK|US-OR|US-PA|US-RI|US-SC|US-SD|US-TN|US-TX|US-UT|US-VT|US-VA|US-WA|US-WV|US-WI|US-WI|US-AS|US-GU|US-MP|US-PR|US-UM|US-VI|US-UM|US-AA|US-AE|US-AP|CA-AB|CA-BC|CA-MB|CA-NB|CA-NL|CA-NS|CA-ON|CA-PE|CA-QC|CA-SK|CA-NT|CA-YT|CA-NU)\].*\[H\].*(\[W\].*)|(^\[META\].*)|(^\[GB\].*)|(^\[IC\].*)|(^\[Artisan\].*)|(^\[Vendor\].*)|(^\[Giveaway\].*)", post.title)
+                        matchObj = re.search(regex, post.title)
                         match2Obj = re.search("(\[selling\])|(\[buying\])", post.title, re.IGNORECASE)
                         if (not matchObj or match2Obj) and not post.distinguished:
                             if post.author.name != username:
                                 logger.warn('Removed post: ' + clean_title + ' by ' + post.author.name)
                                 if not post.approved_by:
                                     post.report('Bad title')
-                                    post.reply('REMOVED: Your post was automatically removed due to an incorrect title. Please read the [wiki](/r/' + subreddit + '/wiki/rules/rules) for posting rules').mod.distinguish()
+                                    post.reply('REMOVED: Your post was automatically removed due to an incorrect title. Please read the [wiki](/r/' + subreddit + rules + ') for posting rules').mod.distinguish()
                                     post.mod.remove()
                                 else:
                                     logger.warn('Bad post approved by: ' + post.approved_by.name)
@@ -113,7 +115,7 @@ def main():
                                     log_msg = 'BAD POST (timestamp) - ' + post.id + ' - ' + clean_title + ' - by: ' + post.author.name
                                     log_msg_level = 'warn'
                                     post.report('Missing timestamp')
-                                    post.reply('REMOVED: Missing timestamps. Please read [wiki](/r/' + subreddit 'wiki/rules/rules) for posting rules. **Do not delete or repost**, just add the timestamp to the post and send a modmail indicating it\'s been added.\n\nIf this is a buying post, you may repost but do not include money related terms on the [W] side of the title.').mod.distinguish()
+                                    post.reply('REMOVED: Missing timestamps. Please read [wiki](/r/' + subreddit + rules + ') for posting rules. **Do not delete or repost**, just add the timestamp to the post and send a modmail indicating it\'s been added.\n\nIf this is a buying post, you may repost but do not include money related terms on the [W] side of the title.').mod.distinguish()
                                     post.mod.remove()
                                     removedpost = True
 
@@ -132,7 +134,7 @@ def main():
                                         log_msg = 'BAD POST (24hr) - ' + post.id + ' - ' + clean_title + ' - by: ' + post.author.name
                                         log_msg_level = 'warn'
                                         post.report('24 hour rule')
-                                        post.reply('REMOVED: Posting too frequently.  Please read [wiki](/r/' + subreddit + '/wiki/rules/rules) for posting time limits.  If you believe this is a mistake, please message the [moderators](http://www.reddit.com/message/compose?to=%2Fr%2F' + subreddit + ').').mod.distinguish()
+                                        post.reply('REMOVED: Posting too frequently.  Please read [wiki](/r/' + subreddit + rules ') for posting time limits.  If you believe this is a mistake, please message the [moderators](http://www.reddit.com/message/compose?to=%2Fr%2F' + subreddit + ').').mod.distinguish()
                                         post.mod.remove()
                                         removedpost = True
 
@@ -157,12 +159,12 @@ def main():
                                     if str(post.author_flair_css_class) == "None":
                                         post.author.flair_css_class = "i-none"
                                     if str(post.author_flair_css_class) == "i-mod":
-                                        post.reply('* Username: ' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: User is currently a moderator.\n* Flair text: ' + str(post.author_flair_text) + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
+                                        post.reply('* Username: ' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: User is currently a moderator.\n* Flair text: ' + str(post.author_flair_text) + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + rules + ') ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
                                     else:
                                         if str(post.author_flair_css_class) == "i-none":
-                                            post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: No trades' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
+                                            post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: No trades' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + rules + ') ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
                                         else:
-                                            post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: ' + str(post.author_flair_css_class).translate(None, 'i-') + ' trade(s)' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + '/wiki/rules/rules) ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
+                                            post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: ' + str(post.author_flair_css_class).translate(None, 'i-') + ' trade(s)' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + rules + ') ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
 
                             if (log_msg_level == 'warn'):
                                 logger.warning(log_msg)
