@@ -33,7 +33,7 @@ equal_warning = cfg_file.get('trade', 'equal')
 age_warning = cfg_file.get('trade', 'age')
 karma_warning = cfg_file.get('trade', 'karma')
 dev_warning = cfg_file.get('trade', 'dev')
-added_msg = cfg_file.get('trade', 'added')
+reply = cfg_file.get('trade', 'reply')
 age_check = int(cfg_file.get('trade', 'age_check'))
 karma_check = int(cfg_file.get('trade', 'karma_check'))
 flair_db = cfg_file.get('trade', 'flair_db')
@@ -59,7 +59,8 @@ def main():
 
     def check_self_reply():
         if comment.author.name == parent.author.name:
-            item.reply(equal_warning)
+            if equal_warning:
+                item.reply(equal_warning)
             item.report('Flair: Self Reply')
             parent.report('Flair: Self Reply')
             save()
@@ -86,7 +87,8 @@ def main():
                 second_chance = next(r.subreddit(subreddit).flair(item.author.name))
                 if second_chance['flair_css_class'] == item.author_flair_css_class:
                     item.report('Flair: Deviation between DB and Reddit')
-                    #item.reply(dev_warning)
+                    if dev_warning:
+                        item.reply(dev_warning)
                     r.subreddit(subreddit).message('Flair Devation Detected', 'User: /u/' + item.author.name + '\n\nDB: ' + str(row['flair_css_class']) + '\n\nReddit: ' + str(item.author_flair_css_class))
                     logger.info('Flair Deviation - User: ' + item.author.name + ', DB: ' + str(row['flair_css_class']) + ', Reddit: ' + str(item.author_flair_css_class))
                     save()
@@ -95,12 +97,14 @@ def main():
         if item.author_flair_css_class < 1:
             if age < age_check:
                 item.report('Flair: Account Age')
-                item.reply(age_warning)
+                if age_warning:
+                    item.reply(age_warning)
                 save()
                 return False
             if karma < karma_check:
                 item.report('Flair: Account Karma')
-                item.reply(karma_warning)
+                if karma_warning:
+                    item.reply(karma_warning)
                 save()
                 return False
         return True
@@ -195,7 +199,8 @@ def main():
             # Flairs up in here
             flair(comment)
             flair(parent)
-            comment.reply(added_msg)
+            if reply:
+                comment.reply(reply)
             save()
 
         for msg in r.inbox.unread(limit=None):
@@ -238,7 +243,8 @@ def main():
 
                             flair(comment)
                             flair(parent)
-                            comment.reply(added_msg)
+                            if reply:
+                                comment.reply(reply)
                             msg.reply('Trade flair added for ' + comment.author.name + ' and ' + parent.author.name)
                             msg.mark_read()
                 else:
