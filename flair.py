@@ -2,6 +2,7 @@
 
 import sys, os
 import re
+import ast
 import praw
 import sqlite3
 import datetime
@@ -38,6 +39,7 @@ age_check = cfg_file.getint('trade', 'age_check')
 karma_check = cfg_file.getint('trade', 'karma_check')
 flair_db = cfg_file.get('trade', 'flair_db')
 flair_dev = cfg_file.getint('trade', 'flair_dev')
+notrade_flairclass = ast.literal_eval(cfg_file.get('trade', 'notrade_flairclass'))
 
 # Configure logging
 logger = LoggerManager().getLogger(__name__)
@@ -112,7 +114,7 @@ def main():
     def values(item):
         if not item.author_flair_css_class or item.author_flair_css_class == 'i-none':
             item.author_flair_css_class = 'i-1'
-        elif (item.author_flair_css_class and ('i-mod' in item.author_flair_css_class or 'i-vendor' in item.author_flair_css_class)):
+        elif (item.author_flair_css_class and (item.author_flair_css_class in notrade_flairclass)):
             pass
         else:
             item.author_flair_css_class = ('i-%d' % (int(''.join([c for c in item.author_flair_css_class if c in '0123456789'])) + 1))
