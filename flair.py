@@ -34,10 +34,10 @@ age_warning = cfg_file.get('trade', 'age')
 karma_warning = cfg_file.get('trade', 'karma')
 dev_warning = cfg_file.get('trade', 'dev')
 reply = cfg_file.get('trade', 'reply')
-age_check = int(cfg_file.get('trade', 'age_check'))
-karma_check = int(cfg_file.get('trade', 'karma_check'))
+age_check = cfg_file.getint('trade', 'age_check')
+karma_check = cfg_file.getint('trade', 'karma_check')
 flair_db = cfg_file.get('trade', 'flair_db')
-flair_dev = cfg_file.get('trade', 'flair_dev')
+flair_dev = cfg_file.getint('trade', 'flair_dev')
 
 # Configure logging
 logger = LoggerManager().getLogger(__name__)
