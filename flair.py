@@ -59,10 +59,10 @@ def main():
             return False
         return True
 
-    def check_self_reply():
+    def check_self_reply(comment, parent):
         if comment.author.name == parent.author.name:
             if equal_warning:
-                item.reply(equal_warning)
+                comment.reply(equal_warning)
             item.report('Flair: Self Reply')
             parent.report('Flair: Self Reply')
             save()
@@ -181,7 +181,7 @@ def main():
             parent = [com for com in flat_comments if com.fullname == comment.parent_id][0]
             if not hasattr(parent.author, 'link_karma'):
                 continue
-            if not check_self_reply():
+            if not check_self_reply(comment, parent):
                 continue
 
             if not comment.author.name.lower() in parent.body.lower():
