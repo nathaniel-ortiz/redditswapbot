@@ -19,7 +19,7 @@ app_key = cfg_file.get('reddit', 'app_key')
 app_secret = cfg_file.get('reddit', 'app_secret')
 subreddit = cfg_file.get('reddit', 'subreddit')
 link_id = cfg_file.get('heatware', 'link_id')
-respond = cfg_file.get('heatware', 'respond')
+reply = cfg_file.get('heatware', 'reply')
 regex = cfg_file.get('heatware', 'regex')
 
 # Configure logging
@@ -60,8 +60,8 @@ def main():
                                 else:
                                     r.subreddit(subreddit).flair.set(comment.author, url, 'i-none')
                                 logger.info('Set ' + comment.author.name + '\'s heatware to ' + url)
-                                if respond == 'yes':
-                                    comment.reply('added')
+                                if reply:
+                                    comment.reply(reply)
 
     except Exception as e:
         logger.error(e)

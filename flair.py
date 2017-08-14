@@ -1,7 +1,10 @@
 #!/usr/bin/env python2
 
 import sys, os
+import re
+import ast
 import praw
+import sqlite3
 import datetime
 from ConfigParser import SafeConfigParser
 from datetime import datetime, timedelta
@@ -30,9 +33,13 @@ link_id = cfg_file.get('trade', conf_link_id)
 equal_warning = cfg_file.get('trade', 'equal')
 age_warning = cfg_file.get('trade', 'age')
 karma_warning = cfg_file.get('trade', 'karma')
-added_msg = cfg_file.get('trade', 'added')
-age_check = int(cfg_file.get('trade', 'age_check'))
-karma_check = int(cfg_file.get('trade', 'karma_check'))
+dev_warning = cfg_file.get('trade', 'dev')
+reply = cfg_file.get('trade', 'reply')
+age_check = cfg_file.getint('trade', 'age_check')
+karma_check = cfg_file.getint('trade', 'karma_check')
+flair_db = cfg_file.get('trade', 'flair_db')
+flair_dev = cfg_file.getint('trade', 'flair_dev')
+notrade_flairclass = ast.literal_eval(cfg_file.get('trade', 'notrade_flairclass'))
 
 # Configure logging
 logger = LoggerManager().getLogger(__name__)
@@ -40,8 +47,6 @@ logger = LoggerManager().getLogger(__name__)
 def main():
 
     def conditions():
-        if comment.id in completed:
-            return False
         if not hasattr(comment.author, 'name'):
             return False
         if 'confirm' not in comment.body.lower():
@@ -56,7 +61,8 @@ def main():
 
     def check_self_reply():
         if comment.author.name == parent.author.name:
-            item.reply(equal_warning)
+            if equal_warning:
+                item.reply(equal_warning)
             item.report('Flair: Self Reply')
             parent.report('Flair: Self Reply')
             save()
@@ -67,15 +73,40 @@ def main():
         karma = item.author.link_karma + item.author.comment_karma
         age = (datetime.utcnow() - datetime.utcfromtimestamp(item.author.created_utc)).days
 
+        curs.execute('''SELECT * FROM flair WHERE username=?''', (item.author.name,))
+
+        row = curs.fetchone()
+
+        if row is not None:
+            if not item.author_flair_css_class:
+                item.author_flair_css_class = ''
+            if not row['flair_css_class']:
+                db_flair_css_class = ''
+            if item.author_flair_css_class == "i-mod":
+                return True
+            if (int(item.author_flair_css_class.translate(None, 'i-') or 0) > (int(row['flair_css_class'].translate(None, 'i-') or 0) + int(flair_dev))) or (int(item.author_flair_css_class.translate(None, 'i-') or 0) < (int(row['flair_css_class'].translate(None, 'i-') or 0) - int(flair_dev))):
+                logger.info('Rechecking deviation: ' + item.author.name)
+                second_chance = next(r.subreddit(subreddit).flair(item.author.name))
+                if second_chance['flair_css_class'] == item.author_flair_css_class:
+                    item.report('Flair: Deviation between DB and Reddit')
+                    if dev_warning:
+                        item.reply(dev_warning)
+                    r.subreddit(subreddit).message('Flair Devation Detected', 'User: /u/' + item.author.name + '\n\nDB: ' + str(row['flair_css_class']) + '\n\nReddit: ' + str(item.author_flair_css_class))
+                    logger.info('Flair Deviation - User: ' + item.author.name + ', DB: ' + str(row['flair_css_class']) + ', Reddit: ' + str(item.author_flair_css_class))
+                    save()
+                    return True
+
         if item.author_flair_css_class < 1:
             if age < age_check:
                 item.report('Flair: Account Age')
-                item.reply(age_warning)
+                if age_warning:
+                    item.reply(age_warning)
                 save()
                 return False
             if karma < karma_check:
                 item.report('Flair: Account Karma')
-                item.reply(karma_warning)
+                if karma_warning:
+                    item.reply(karma_warning)
                 save()
                 return False
         return True
@@ -83,7 +114,7 @@ def main():
     def values(item):
         if not item.author_flair_css_class or item.author_flair_css_class == 'i-none':
             item.author_flair_css_class = 'i-1'
-        elif (item.author_flair_css_class and ('i-mod' in item.author_flair_css_class or 'i-vendor' in item.author_flair_css_class)):
+        elif (item.author_flair_css_class and (item.author_flair_css_class in notrade_flairclass)):
             pass
         else:
             item.author_flair_css_class = ('i-%d' % (int(''.join([c for c in item.author_flair_css_class if c in '0123456789'])) + 1))
@@ -92,8 +123,13 @@ def main():
 
     def flair(item):
         if item.author_flair_css_class != 'i-mod':
+            # Set flair in subreddit
             r.subreddit(subreddit).flair.set(item.author, item.author_flair_text, item.author_flair_css_class)
             logger.info('Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)
+            # Set flair in database
+            curs.execute('''UPDATE OR IGNORE flair SET flair_text=?, flair_css_class=? WHERE username=?''', (item.author_flair_text, item.author_flair_css_class, item.author.name, ))
+            curs.execute('''INSERT OR IGNORE INTO flair (username, flair_text, flair_css_class) VALUES (?, ?, ?)''', (item.author.name, item.author_flair_text, item.author_flair_css_class, ))
+            con.commit()
 
         for com in flat_comments:
             if hasattr(com.author, 'name'):
@@ -109,6 +145,14 @@ def main():
         with open(link_id + ".log", 'a+') as myfile:
             completed = myfile.read()
 
+        try:
+            con = sqlite3.connect(flair_db)
+            con.row_factory = sqlite3.Row
+        except sqlite3.Error, e:
+            logger.exception("Error %s:" % e.args[0])
+
+        curs = con.cursor()
+
         # Log in
         logger.info('Logging in as /u/' + username)
         r = praw.Reddit(client_id=app_key,
@@ -116,6 +160,8 @@ def main():
                         username=username,
                         password=password,
                         user_agent=username)
+
+        mods = r.subreddit(subreddit).moderator()
 
         # Get the submission and the comments
         logger.info('Starting to grab comments')
@@ -126,8 +172,9 @@ def main():
         logger.info('Finished grabbing comments')
 
         for comment in flat_comments:
-            logger.debug("Processing comment: " + comment.id)
             if not hasattr(comment, 'author'):
+                continue
+            if comment.id in completed:
                 continue
             if not conditions():
                 continue
@@ -140,7 +187,8 @@ def main():
             if not comment.author.name.lower() in parent.body.lower():
                 continue
 
-            # Check Account Age and Karma
+            # Check Account Age, Karma, and Flair Deviation
+            logger.debug('Verifying comment id: ' + comment.id + ' and parent id: ' + parent.id)
             if not verify(comment):
                 continue
             if not verify(parent):
@@ -153,8 +201,60 @@ def main():
             # Flairs up in here
             flair(comment)
             flair(parent)
-            comment.reply(added_msg)
+            if reply:
+                comment.reply(reply)
             save()
+
+        for msg in r.inbox.unread(limit=None):
+            if not msg.was_comment:
+                if msg.author in mods:
+                    logger.info('Processing PM from mod: ' + msg.author.name)
+                    mod_link = re.search('^(https?:\/\/(?:www\.)?reddit\.com\/r\/.*\/comments\/.{6}\/.*\/.{7}\/)$', msg.body)
+                    if not mod_link:
+                        msg.reply('You have submitted an invalid URL')
+                        msg.mark_as_read()
+                        continue
+                    else:
+                        match = re.search(r'[^/]+(?=\/$|$)', msg.body)
+                        check_id = match.group(0)
+                        tocheck = r.comment(id=check_id).refresh()
+                        flat_comments = tocheck.replies.list()
+                        for comment in flat_comments:
+                            if not hasattr(comment, 'author'):
+                                continue
+                            if comment.mod_reports:
+                                comment.mod.approve()
+                            if comment.author.name == username:
+                                comment.mod.remove()
+                                continue
+
+                            if parent.mod_reports:
+                                parent.mod.approve()
+
+                            parent = tocheck
+
+                            logger.info('Mod - Verifying comment id: ' + comment.id + ' and parent id: ' + parent.id)
+
+                            if not conditions():
+                                continue
+                            if not hasattr(parent.author, 'link_karma'):
+                                continue
+
+                            values(comment)
+                            values(parent)
+
+                            flair(comment)
+                            flair(parent)
+                            if reply:
+                                comment.reply(reply)
+                            msg.reply('Trade flair added for ' + comment.author.name + ' and ' + parent.author.name)
+                            msg.mark_read()
+                else:
+                    logger.info('Processing PM from user: ' + msg.author.name)
+                    msg.reply('[BEEP BOOP! I AM A BOT!](http://i.imgur.com/9dJ2quO.gif)')
+                    msg.mark_read()
+
+        con.close()
 
     except Exception as e:
         logger.error(e)
