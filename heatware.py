@@ -58,7 +58,7 @@ def main():
                                 if comment.author_flair_css_class:
                                     r.subreddit(subreddit).flair.set(comment.author, url, comment.author_flair_css_class)
                                 else:
-                                    r.subreddit(subreddit).flair.set(comment.author, url, 'i-none')
+                                    r.subreddit(subreddit).flair.set(comment.author, url, '')
                                 logger.info('Set ' + comment.author.name + '\'s heatware to ' + url)
                                 if reply:
                                     comment.reply(reply)

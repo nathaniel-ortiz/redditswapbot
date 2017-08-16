@@ -65,7 +65,7 @@ def main():
                         already_done.append(post.id)
                         if (not re.search(posttitle_regex, post.title) or re.search(blacklist_regex, post.title, re.IGNORECASE)) and not post.distinguished:
                             if post.author.name != username:
-                                logger.warn('Removed post: ' + clean_title + ' by ' + post.author.name)
+                                logger.warn('BAD POST (format) - ' + post.id + ' - ' + clean_title + ' - by: ' + post.author.name)
                                 if not post.approved_by:
                                     post.report('Bad title')
                                     post.reply('REMOVED: Your post was automatically removed due to an incorrect title. Please read the [wiki](/r/' + subreddit + rules + ') for posting rules').mod.distinguish()
@@ -79,7 +79,7 @@ def main():
                                 for f in flairs:
                                     if post.link_flair_text:
                                         if post.link_flair_text == f['name']:
-                                            log_msg = "*" + f['name'] + ": " + clean_title
+                                            log_msg = 'GOOD POST (*' + f['name'] + ") - " + post.id + ' - ' + clean_title + ' - by: ' + post.author.name
                                             if f['timestamp_check']:
                                                 checktimestamp = True
                                             if f['no_reply']:
@@ -88,7 +88,7 @@ def main():
                                     elif re.search(f['regex'], post.title, re.IGNORECASE):
                                         post.link_flair_text = f['name']
                                         post.mod.flair(text=f['name'], css_class=f['class'])
-                                        log_msg = f['name'] + ": " + clean_title
+                                        log_msg = 'GOOD POST (' + f['name'] + ") - " + post.id + ' - ' + clean_title + ' - by: ' + post.author.name
                                         if f['timestamp_check']:
                                             checktimestamp = True
                                         if f['no_reply']:
@@ -141,13 +141,7 @@ def main():
                                         heatware = "None"
                                     else:
                                         heatware = "[" + str(post.author_flair_text) + "](" + str(post.author_flair_text) + ")"
-                                    if str(post.author_flair_css_class) == "None":
-                                        post.author.flair_css_class = "i-none"
-                                    else:
-                                        if str(post.author_flair_css_class) == "i-none":
-                                            post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: No trades' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + rules + ') ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
-                                        else:
-                                            post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Reputation: ' + str(post.author_flair_css_class).translate(None, 'i-') + ' trade(s)' '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + rules + ') ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
+                                    post.reply('* Username: /u/' + str(post.author.name) + '\n* Join date: ' + age + '\n* Link karma: ' + str(post.author.link_karma) + '\n* Comment karma: ' + str(post.author.comment_karma) + '\n* Confirmed trades: ' + str(post.author_flair_css_class) + '\n* Heatware: ' + heatware + '\n\n^^This ^^information ^^does ^^not ^^guarantee ^^a ^^successful ^^swap. ^^It ^^is ^^being ^^provided ^^to ^^help ^^potential ^^trade ^^partners ^^have ^^more ^^immediate ^^background ^^information ^^about ^^with ^^whom ^^they ^^are ^^swapping. ^^Please ^^be ^^sure ^^to ^^familiarize ^^yourself ^^with ^^the ^^[RULES](https://www.reddit.com/r/' + subreddit + rules + ') ^^and ^^other ^^guides ^^on ^^the ^^[WIKI](https://www.reddit.com/r/' + subreddit + '/wiki/index)').mod.distinguish()
 
                             if (log_msg_level == 'warn'):
                                 logger.warning(log_msg)

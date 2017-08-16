@@ -63,7 +63,7 @@ def main():
         if comment.author.name == parent.author.name:
             if equal_warning:
                 comment.reply(equal_warning)
-            item.report('Flair: Self Reply')
+            comment.report('Flair: Self Reply')
             parent.report('Flair: Self Reply')
             save()
             return False
@@ -79,12 +79,12 @@ def main():
 
         if row is not None:
             if not item.author_flair_css_class:
-                item.author_flair_css_class = ''
+                item.author_flair_css_class = 0
             if not row['flair_css_class']:
-                db_flair_css_class = ''
-            if item.author_flair_css_class == "i-mod":
+                db_flair_css_class = 0
+            if item.author_flair_css_class in notrade_flairclass:
                 return True
-            if (int(item.author_flair_css_class.translate(None, 'i-') or 0) > (int(row['flair_css_class'].translate(None, 'i-') or 0) + int(flair_dev))) or (int(item.author_flair_css_class.translate(None, 'i-') or 0) < (int(row['flair_css_class'].translate(None, 'i-') or 0) - int(flair_dev))):
+            if (int(item.author_flair_css_class or 0) > (int(row['flair_css_class'] or 0) + int(flair_dev))) or (int(item.author_flair_css_class or 0) < (int(row['flair_css_class'] or 0) - int(flair_dev))):
                 logger.info('Rechecking deviation: ' + item.author.name)
                 second_chance = next(r.subreddit(subreddit).flair(item.author.name))
                 if second_chance['flair_css_class'] == item.author_flair_css_class:
@@ -112,17 +112,22 @@ def main():
         return True
 
     def values(item):
-        if not item.author_flair_css_class or item.author_flair_css_class == 'i-none':
-            item.author_flair_css_class = 'i-1'
+        if not item.author_flair_css_class:
+            logger.info('Rechecking empty flair: ' + item.author.name)
+            second_chance = next(r.subreddit(subreddit).flair(item.author.name))
+            if second_chance['flair_css_class'] == item.author_flair_css_class:
+                item.author_flair_css_class = '1'
+            else:
+                item.author_flair_css_class = str(int(item.author_flair_css_class or 0) + 1)
         elif (item.author_flair_css_class and (item.author_flair_css_class in notrade_flairclass)):
             pass
         else:
-            item.author_flair_css_class = ('i-%d' % (int(''.join([c for c in item.author_flair_css_class if c in '0123456789'])) + 1))
+            item.author_flair_css_class = str(int(item.author_flair_css_class) + 1)
         if not item.author_flair_text:
             item.author_flair_text = ''
 
     def flair(item):
-        if item.author_flair_css_class != 'i-mod':
+        if item.author_flair_css_class not in notrade_flairclass:
             # Set flair in subreddit
             r.subreddit(subreddit).flair.set(item.author, item.author_flair_text, item.author_flair_css_class)
             logger.info('Set ' + item.author.name + '\'s flair to ' + item.author_flair_css_class)

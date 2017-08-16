@@ -42,9 +42,7 @@ def load_json(file):
     flair_json = json.load(open(file))
     for entry in flair_json:
         if entry['flair_css_class'] is None:
-            entry['flair_css_class'] = "i-none"
-        if 'i-' not in entry['flair_css_class']:
-            entry['flair_css_class'] = "i-" + entry['flair_css_class']
+            entry['flair_css_class'] = ""
         print("Setting username: \'" + entry['user'] + "\' to flair_css_class: \'" + entry['flair_css_class'] + "\' and flair_text to: \'" + str(entry['flair_text']) + "\'")
 
     return flair_json
@@ -55,8 +53,6 @@ def load_csv(file):
     with open(file) as flair:
         for line in flair:
             username, flair_css, flair_text = line.rstrip().split(',')
-            if 'i-' not in flair_css:
-                flair_css = "i-" + flair_css
             print("Setting username: \'" + username + "\' to flair_css_class: \'" + flair_css + "\' and flair_text to: \'" + flair_text + "\'")
             i = {
                 'user': username,
