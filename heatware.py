@@ -27,7 +27,7 @@ logger = LoggerManager().getLogger(__name__)
 
 def main():
     try:
-        logger.info('Logging in as /u/' + username)
+        logger.debug('Logging in as /u/' + username)
         r = praw.Reddit(client_id=app_key,
                         client_secret=app_secret,
                         username=username,
