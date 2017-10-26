@@ -71,7 +71,7 @@ def main():
                                     post.reply('REMOVED: Your post was automatically removed due to an incorrect title. Please read the [wiki](/r/' + subreddit + rules + ') for posting rules').mod.distinguish()
                                     post.mod.remove()
                                 else:
-                                    logger.warn('Bad post approved by: ' + post.approved_by.name)
+                                    logger.warn('Bad post approved by: ' + post.approved_by)
                         else:
                             log_msg = ""
                             log_msg_level = ""
