@@ -85,7 +85,7 @@ def main():
                                             if f['no_reply']:
                                                 noreply = True
                                             break
-                                    elif re.search(f['regex'], post.title):
+                                    elif re.search(f['regex'], post.title, re.IGNORECASE):
                                         post.link_flair_text = f['name']
                                         post.mod.flair(text=f['name'], css_class=f['class'])
                                         log_msg = f['name'] + ": " + clean_title
